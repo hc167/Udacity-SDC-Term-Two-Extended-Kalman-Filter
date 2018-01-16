@@ -31,12 +31,6 @@ FusionEKF::FusionEKF() {
         0, 0.0009, 0,
         0, 0, 0.09;
 
-  /**
-  TODO:
-    * Finish initializing the FusionEKF.
-    * Set the process and measurement noises
-  */
-
   H_laser_ << 1, 0, 0, 0,
     0, 1, 0, 0;
 }
@@ -92,7 +86,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
       data2 << x, y, 0, 0;
 
-      ekf_.Init(data2, P, F, H_laser_, R_laser_);
+      ekf_.Init(data2, P, F, H_laser_, R_laser_, R_radar_);
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
       /**
@@ -101,9 +95,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       VectorXd data2 = VectorXd(4);
       data2 << data[0], data[1], 0, 0;
 
-      ekf_.Init(data2, P, F, H_laser_, R_laser_);
+      ekf_.Init(data2, P, F, H_laser_, R_laser_, R_radar_);
     }
-
 
     previous_timestamp_ = measurement_pack.timestamp_ ;
 
@@ -111,7 +104,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     is_initialized_ = true;
     return;
   }
-
 
   /*****************************************************************************
    *  Prediction
@@ -127,7 +119,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
   //compute the time elapsed between the current and previous measurements
   float dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;//dt - expressed in seconds
-  //  previous_timestamp_ = measurement_pack.timestamp_;
 
   float dt_2 = dt * dt;
   float dt_3 = dt_2 * dt;
@@ -156,20 +147,14 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    *  Update
    ****************************************************************************/
 
-  /**
-   TODO:
-     * Use the sensor type to perform the update step.
-     * Update the state and covariance matrices.
-   */
-
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
     // Radar updates
     ekf_.UpdateEKF(measurement_pack.raw_measurements_);
   } else {
     // Laser updates
     ekf_.Update(measurement_pack.raw_measurements_);
-    previous_timestamp_ = measurement_pack.timestamp_;
  }
+  previous_timestamp_ = measurement_pack.timestamp_;
 
   // print the output
   cout << "x_ = " << ekf_.x_ << endl;
